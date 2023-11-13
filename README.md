@@ -1,7 +1,9 @@
 # Job Interview Assistant
-If this helped you ace your job interview and you would like to thank me you can do it here! [
+If this helped you ace your job interview and you would like to thank me you can do it here!
+[
     ![Donate with PayPal]
-    https://raw.githubusercontent.com/ValentinKlamka/JobInterviewAssistant/master/paypal-donate-button.png]
+    https://github.com/ValentinKlamka/JobInterviewAssistant/blob/main/paypal-donate-button.png
+]
 (https://www.paypal.com/donate/?hosted_button_id=MBW7WAP8SSVAN)
 ## Introduction
 You have the feeling that you suck at online job interviews? Then this is for you. All-embracing knowhow, serious skills, impressive expertise, good preparation - who needs all of that, when you have your good friend ChatGPT? Just record what the interviewer askes and let ChatGPT generate the answers for you. Stand out with minimal effort. You will be amazed how well it works <sub><sup>(*results may vary)</sup></sub>.
