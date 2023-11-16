@@ -5,6 +5,7 @@ import wave
 import threading
 from os.path import join, dirname
 from openai import OpenAI
+import configparser
 
 
 CHUNK = 1024
@@ -16,6 +17,18 @@ FILEINDEX = 0
 memory=[]
 frames=[]
 recording = False
+
+#create items consiting of model name, cost and description
+class Model:
+    def __init__(self, name,  hint,cost):
+        self.name = name
+        self.hint = hint
+        self.cost = cost
+
+
+Modellist = []
+Modellist.append(Model("gpt-3.5-turbo"," (Recommended)", "$0.002 / 1K tokens"))
+Modellist.append(Model("gpt-4-1106-preview","", "$0.03 / 1K tokens"))
 
 client = OpenAI()
 
@@ -44,8 +57,6 @@ def on_enter(e):
     button['background'] = 'green'
     button['text'] = 'Recording'
     button['fg'] = 'black'
-    button['width'] = 20
-    button['height'] = 20
 
     print("* recording")
     global recording
@@ -70,8 +81,6 @@ def on_leave(e):
     button['background'] = 'red'
     button['text'] = 'Record'
     button['fg'] = 'white'
-    button['width'] = 20
-    button['height'] = 20
     global recording
     recording=False
     print(len(frames))
@@ -98,7 +107,6 @@ def transcribe():
         file=audio_file,
         response_format="text"
     )
-    print (transcript)
     #append transcript to log.txt file
     f = open("log.txt", "a")
     f.write(transcript)
@@ -119,8 +127,13 @@ def transcribe():
 
 def getResponse(transcript):
     global memory 
+    #read config.ini file to get gpt-version
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    #get gpt-version from config.ini file
+    gpt_version = config["GPT-Version"]["gpt-version"]
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model=gpt_version,
         messages=[
             {"role": "system", "content": "Please help to guide me through my job interview."},
             {"role": "assistant", "content": ''.join(memory)},
@@ -149,8 +162,6 @@ def getResponse(transcript):
     return
 
 def on_closing():
-
-    print("Closing")
     global recording
     recording=False
 
@@ -158,6 +169,48 @@ def on_closing():
     stream.close()
     p.terminate()
     window.destroy()
+
+def select(option):
+    #change config.ini file to change gpt-version
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    config['GPT-Version']['gpt-version'] = option
+    with open('config.ini', 'w') as configfile:
+        config.write(configfile)
+    changebold()
+    return
+
+def changebold():
+    #value of gpt-version in config.ini file
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    for index in range(file_menu.index("end")):
+        if config["GPT-Version"]["gpt-version"] ==Modellist[index].name:
+
+            file_menu.entryconfig(index, font=('TkDefaultFont', 10, 'bold'))
+            add_checkmark(file_menu, index)
+
+        else:
+            file_menu.entryconfig(index, font=('TkDefaultFont', 10))
+            remove_checkmark(file_menu, index)
+    return
+
+def add_checkmark(menu, index,checkmark='\u2713'):
+
+    label = menu.entrycget(index, "label")
+    if checkmark not in label:
+        label += f" {checkmark}"
+        menu.entryconfig(index, label=label)
+
+def remove_checkmark(menu, index,checkmark='\u2713'):
+    label = menu.entrycget(index, "label")
+    if checkmark in label:
+        label = label.replace(checkmark, "").strip()
+        menu.entryconfig(index, label=label)
+
+    
+    return
+
 
 
 
@@ -179,26 +232,31 @@ window.geometry('2000x200')
 window.configure(background='white')
 window.grid_rowconfigure(0, weight=1)
 window.grid_columnconfigure(0, weight=1)
+#create a menu bar with a menu which contains gpt-3.5-turbo, gpt-4.0-turbo quit
+menu_bar = Menu(window)
+file_menu = Menu(menu_bar, tearoff=0)
+for model in Modellist:
+    file_menu.add_command(label=model.name+model.hint + " "+model.cost, command=lambda m=model.name: select(m))
+
+file_menu.add_command(label="Quit", command=on_closing) 
+menu_bar.add_cascade(label="File", menu=file_menu)
+window.config(menu=menu_bar)
+changebold()
+
 button = tk.Button(mainframe, text='Record', width=20, height=10, bg='red', fg='white')
-#button always top left
-button.pack(side=LEFT, anchor=NW)
+button.pack(side=LEFT, anchor=SW)
 button.bind("<Enter>", on_enter)
 button.bind("<Leave>", on_leave)
+
 # to the right side of the button create a scrollable text box
 text_box = tk.Text(mainframe, height=10, width=200)
 text_box.pack(side=RIGHT, anchor=NW)
-
-
 # make it scrollable
 scroll = tk.Scrollbar(mainframe, command=text_box.yview)
 scroll.pack(side=RIGHT, fill=Y)
 text_box.config(yscrollcommand=scroll.set)
 #make it non editable
 text_box.configure(state='disabled')
-
-
-
-
 window.protocol("WM_DELETE_WINDOW", on_closing)
 
 window.mainloop()

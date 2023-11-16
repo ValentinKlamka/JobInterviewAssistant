@@ -9,6 +9,7 @@ pyaudio = "*"
 wave = "*"
 thread6 = "*"
 openai = "*"
+configparser = "*"
 
 [dev-packages]
 
