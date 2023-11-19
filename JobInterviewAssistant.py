@@ -50,6 +50,17 @@ class transcribeThread (threading.Thread):
         transcribe()
         print ("Exiting " + self.name)
 
+#thread to get response from gpt-3 with argument transcript
+
+class getResponseThread (threading.Thread):
+    def __init__(self,transcript):
+        threading.Thread.__init__(self)
+        self.transcript = transcript
+    def run(self):  
+        print ("Starting " + self.name)
+        getResponse(self.transcript)
+        print ("Exiting " + self.name)
+
 #on enter start recording
 def on_enter(e):
     
@@ -107,6 +118,9 @@ def transcribe():
         file=audio_file,
         response_format="text"
     )
+    if len(transcript) <= 4:
+        print("No transcript found")
+        return
     #append transcript to log.txt file
     f = open("log.txt", "a")
     f.write(transcript)
@@ -121,8 +135,9 @@ def transcribe():
     text_box.see(END)
     
     FILEINDEX+=1
-
-    getResponse(transcript)
+    #start response thread
+    thread_g = getResponseThread(transcript)
+    thread_g.start()
     return
 
 def getResponse(transcript):
@@ -135,7 +150,7 @@ def getResponse(transcript):
     response = client.chat.completions.create(
         model=gpt_version,
         messages=[
-            {"role": "system", "content": "Please help to guide me through my job interview."},
+            {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."},
             {"role": "assistant", "content": ''.join(memory)},
             {"role": "user", "content": transcript}
         ],
@@ -211,6 +226,24 @@ def remove_checkmark(menu, index,checkmark='\u2713'):
     
     return
 
+def send_message(event=None):
+    message = entry_box.get()
+    if message.strip() != "":
+        text_box.config(state=tk.NORMAL)
+        text_box.insert(tk.END, f"\n{message}\n")
+        f = open("log.txt", "a")
+        f.write(message)
+        f.write("\n")
+        f.close()
+        text_box.config(state=tk.DISABLED)
+        text_box.see(tk.END)
+        entry_box.delete(0, tk.END)
+        #start response thread
+        thread_g = getResponseThread(message+"\n")
+        thread_g.start()
+    return 
+
+
 
 
 
@@ -228,11 +261,15 @@ window=tk.Tk()
 mainframe=tk.Frame(window,bg='white')
 mainframe.pack(fill=BOTH, expand=1)
 window.title('Job Interview Assistant')  
-window.geometry('2000x200')
+screen_width = window.winfo_screenwidth()
+window.geometry(str(screen_width)+ 'x200')
+#it should open on the top of the screen
+window.geometry("+0+0")
+
 window.configure(background='white')
 window.grid_rowconfigure(0, weight=1)
 window.grid_columnconfigure(0, weight=1)
-#create a menu bar with a menu which contains gpt-3.5-turbo, gpt-4.0-turbo quit
+
 menu_bar = Menu(window)
 file_menu = Menu(menu_bar, tearoff=0)
 for model in Modellist:
@@ -250,13 +287,34 @@ button.bind("<Leave>", on_leave)
 
 # to the right side of the button create a scrollable text box
 text_box = tk.Text(mainframe, height=10, width=200)
-text_box.pack(side=RIGHT, anchor=NW)
+
 # make it scrollable
 scroll = tk.Scrollbar(mainframe, command=text_box.yview)
 scroll.pack(side=RIGHT, fill=Y)
 text_box.config(yscrollcommand=scroll.set)
 #make it non editable
 text_box.configure(state='disabled')
+
+entry_frame = tk.Frame(mainframe, bg='white')
+entry_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, padx=5, pady=5)
+text_box.pack(side=tk.TOP, fill=tk.BOTH, padx=5, pady=5, expand=True)
+#attach entry frame to the bottom of the mainframe
+
+
+entry_box = tk.Entry(entry_frame)
+entry_box.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+entry_box.bind("<Return>", send_message)
+
+
+send_button = tk.Button(entry_frame, text="Send", command=send_message)
+send_button.grid(row=0, column=1, padx=5, pady=5)
+
+entry_frame.columnconfigure(0, weight=1)  # Make entry_box expandable
+entry_frame.columnconfigure(1, minsize=50)  # Set a minimum size for the Send button
+
+
+
+
 window.protocol("WM_DELETE_WINDOW", on_closing)
 
 window.mainloop()
