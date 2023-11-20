@@ -298,11 +298,14 @@ text_box.configure(state='disabled')
 entry_frame = tk.Frame(mainframe, bg='white')
 entry_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, padx=5, pady=5)
 text_box.pack(side=tk.TOP, fill=tk.BOTH, padx=5, pady=5, expand=True)
-#attach entry frame to the bottom of the mainframe
-
 
 entry_box = tk.Entry(entry_frame)
 entry_box.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+#make entry box scrollable
+entry_scroll = tk.Scrollbar(entry_frame, command=entry_box.xview, orient="horizontal")
+entry_scroll.grid(row=1, column=0, sticky="ew")
+entry_box.configure(xscrollcommand=entry_scroll.set)
+#bind enter key to send message
 entry_box.bind("<Return>", send_message)
 
 
