@@ -299,18 +299,20 @@ entry_frame = tk.Frame(mainframe, bg='white')
 entry_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, padx=5, pady=5)
 text_box.pack(side=tk.TOP, fill=tk.BOTH, padx=5, pady=5, expand=True)
 
-entry_box = tk.Entry(entry_frame)
+entry_box = tk.Text(entry_frame,height=2,width=200) 
 entry_box.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 #make entry box scrollable
-entry_scroll = tk.Scrollbar(entry_frame, command=entry_box.xview, orient="horizontal")
-entry_scroll.grid(row=1, column=0, sticky="ew")
-entry_box.configure(xscrollcommand=entry_scroll.set)
+scroll = tk.Scrollbar(entry_frame, command=entry_box.yview)
+scroll.grid(row=0, column=1, sticky="ns")
+entry_box.config(yscrollcommand=scroll.set)
+
 #bind enter key to send message
 entry_box.bind("<Return>", send_message)
 
 
 send_button = tk.Button(entry_frame, text="Send", command=send_message)
-send_button.grid(row=0, column=1, padx=5, pady=5)
+send_button.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+
 
 entry_frame.columnconfigure(0, weight=1)  # Make entry_box expandable
 entry_frame.columnconfigure(1, minsize=50)  # Set a minimum size for the Send button
