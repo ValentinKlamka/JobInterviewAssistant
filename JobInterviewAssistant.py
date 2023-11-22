@@ -78,7 +78,6 @@ def on_enter(e):
 def record():
 
     global recording
-    print("BLA")
     while recording:
 
         data = stream.read(CHUNK)
@@ -94,7 +93,6 @@ def on_leave(e):
     button['fg'] = 'white'
     global recording
     recording=False
-    print(len(frames))
     print("* done recording")
     
     global FILEINDEX
@@ -145,12 +143,23 @@ def getResponse(transcript):
     #read config.ini file to get gpt-version
     config = configparser.ConfigParser()
     config.read('config.ini')
+
+    #open and read cv_summary.md file
+    f = open("cv_summary.md", "r")
+    cv_summary = f.read()
+    f.close()
+    if len(cv_summary) > 0:
+        cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person:"+cv_summary}
+    else:
+        cv_summary_prompt= {"role": "assistant", "content": "No Summary of the CV of the interviewed person found."}
+    print (cv_summary_prompt)    
     #get gpt-version from config.ini file
     gpt_version = config["GPT-Version"]["gpt-version"]
     response = client.chat.completions.create(
         model=gpt_version,
         messages=[
             {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."},
+            cv_summary_prompt,
             {"role": "assistant", "content": ''.join(memory)},
             {"role": "user", "content": transcript}
         ],
