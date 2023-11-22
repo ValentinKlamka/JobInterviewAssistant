@@ -1,3 +1,4 @@
 *.wav
 log.txt
 whisper_test.py
+cv_summary.md
