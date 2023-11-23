@@ -51,7 +51,7 @@ What happens internally is that this gets passed to ChatGPT at each request: ``c
 
 ### Interview
 
-Before the Interview starts open a command promt in the JobInterviewAssistant folder and execute ```python JobInterviewAssistant.py```. A window with a big red button on the left side will open at the top of your screen. If you **hover** over that button it starts recording. Clicking it does nothing extra. If you stop hovering over the button it stops recording, the transcription process starts and an answer  is generated. The transcript and the generated answer will be displayed right next to the red button. Notice that your microphone is never recorded, just the sound output channel of your computer.
+Before the Interview starts, open a command promt in the JobInterviewAssistant folder and execute ```python JobInterviewAssistant.py```. A window with a big red button on the left side will open at the top of your screen. If you **hover** over that button it starts recording. Clicking it does nothing extra. If you stop hovering over the button it stops recording, the transcription process starts and an answer  is generated. The transcript and the generated answer will be displayed right next to the red button. Notice that your microphone is never recorded, just the sound output channel of your computer.
 
 The system command prompt is `` {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."}``. Feel free to open JobinterviewAssistant.py with a text editor and change the prompt to your liking, it's currently line 161 in JobinterviewAssistant.py.
 
