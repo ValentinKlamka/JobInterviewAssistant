@@ -37,6 +37,22 @@ For comparison: The whole shakespeare corpus has ~900,000 words. That would be r
 Note however, that for our chatbot to have a memory we need to feed it the previous conversation. So the price per request will increase per request, because one request is previous conversation + new input. When you start a new session it will not know the conversation from the previous session. 
 
 ## Usage
-Open a command promt in the JobInterviewAssistant folder and execute ```python JobInterviewAssistant.py```. A window with a big red button on the left side will open. If you **hover** over that button it starts recording. Clicking it does nothing extra. If you stop hovering over the button it stops recording, the transcription process starts and an answer  is generated. The transcript and the generated answer will be displayed right next to the red button. Notice that your microphone is never recorded, just the sound output channel of your computer.
+### Preperation
+Before you start your Interview you can provide a summary of your CV to the Assistant with the help of external tools.
 
-To test if it works you can play a random youtube video, where someone speaks. Play the video, record it by hovering over the button and stop recording by moving your mouse away from the button. The transcript should be displayed within a few seconds and an answer should be generated. If that works, you are ready to go.
+1. You need to use an AI Tool which can read documents. If you have a Microsoft Account you can use the Bing AI. Just open Your CV as a PDF file in your edge browser. If you don't have and/or don't want to create a Microsoft Account you can also use for example https://www.chatpdf.com/
+2. Type something along the lines of "Please extract all the relevant information from this CV." into the chat window and let the AI do its magic. 
+3. Copy the summary and paste it into the `cv_summary.md` file in the `JobInterviewAssistant` folder.
+4. Make all the necessary adjustments to the summary. Read carefully, maybe the AI made some mistakes, which are not obvious at first glance.
+5. Save the file and close it.
+
+
+What happens internally is that this gets passed to ChatGPT at each request: ``cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person:"+cv_summary}``
+
+### Interview
+
+Before the Interview starts open a command promt in the JobInterviewAssistant folder and execute ```python JobInterviewAssistant.py```. A window with a big red button on the left side will open at the top of your screen. If you **hover** over that button it starts recording. Clicking it does nothing extra. If you stop hovering over the button it stops recording, the transcription process starts and an answer  is generated. The transcript and the generated answer will be displayed right next to the red button. Notice that your microphone is never recorded, just the sound output channel of your computer.
+
+The system command prompt is `` {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."}``. Feel free to open JobinterviewAssistant.py with a text editor and change the prompt to your liking, it's currently line 161 in JobinterviewAssistant.py.
+
+To test if it works you can play a random youtube video, where someone speaks. Play the video, record it by hovering over the button and stop recording by moving your mouse away from the button. The transcript should be displayed within a few seconds and an answer should be generated. If you did set up the cv summary you might also want to test if that works. Type "Tell me something about yourself" in the chat and see if a tailored answer is generated. If that works, you are ready to go.

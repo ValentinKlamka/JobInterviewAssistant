@@ -40,7 +40,7 @@ class recordThread (threading.Thread):
       record()
       print ("Exiting " + self.name)
 
-
+# thread to transcribe the recorded audio file
 
 class transcribeThread (threading.Thread):
     def __init__(self):
