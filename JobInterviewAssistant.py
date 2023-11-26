@@ -128,6 +128,7 @@ def transcribe():
     #append transcript to text box
     text_box.configure(state='normal')
     text_box.insert(END,transcript)
+    text_box.insert(END,"\n")
     text_box.configure(state='disabled')
     #scroll to bottom
     text_box.see(END)
@@ -145,28 +146,37 @@ def getResponse(transcript):
     config.read('config.ini')
 
     #open and read cv_summary.md file
-    f = open("cv_summary.md", "r")
-    cv_summary = f.read()
-    f.close()
-    if len(cv_summary) > 0:
-        cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person: "+cv_summary}
-    else:
+    try:
+        f = open("cv_summary.md", "r")
+        cv_summary = f.read()
+        f.close()
+        if len(cv_summary) > 0:
+            cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person: "+cv_summary}
+        else:
+            cv_summary_prompt= {"role": "assistant", "content": ""}
+    except:
         cv_summary_prompt= {"role": "assistant", "content": ""}
 
+
     #open and read job_description.md file
-    f = open("job_description_summary.md", "r")
-    job_description = f.read()
-    f.close()
-    if len(job_description) > 0:
-        job_description_prompt= {"role": "assistant", "content": "Job description summary: "+job_description}
-    else:
+    #if jobdscription_summary.md exists
+    try:
+        f = open("jobdescription_summary.md", "r")
+        job_description = f.read()
+        f.close()
+        if len(job_description) > 0:
+            job_description_prompt= {"role": "assistant", "content": "Job description summary: "+job_description}
+        else:
+            job_description_prompt= {"role": "assistant", "content": ""}
+    #if jobdscription_summary.md does not exist
+    except:
         job_description_prompt= {"role": "assistant", "content": ""}
     #get gpt-version from config.ini file
     gpt_version = config["GPT-Version"]["gpt-version"]
     response = client.chat.completions.create(
         model=gpt_version,
         messages=[
-            {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."},
+            {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person. Give short answers."},
             cv_summary_prompt,
             job_description_prompt,
             {"role": "assistant", "content": ''.join(memory)},
@@ -185,6 +195,9 @@ def getResponse(transcript):
             text_box.insert(END,chunk_message,'blue')
             text_box.configure(state='disabled')
             text_box.see(END)
+    text_box.configure(state='normal')
+    text_box.insert(END,"\n")
+    text_box.configure(state='disabled')
     full_reply_content = ''.join(collected_messages)
     f = open("log.txt", "a")
     f.write(full_reply_content)
@@ -245,7 +258,7 @@ def remove_checkmark(menu, index,checkmark='\u2713'):
     return
 
 def send_message(event=None):
-    message = entry_box.get()
+    message = entry_box.get("1.0", tk.END).strip()
     if message.strip() != "":
         text_box.config(state=tk.NORMAL)
         text_box.insert(tk.END, f"\n{message}\n")
@@ -255,7 +268,7 @@ def send_message(event=None):
         f.close()
         text_box.config(state=tk.DISABLED)
         text_box.see(tk.END)
-        entry_box.delete(0, tk.END)
+        entry_box.delete("1.0", tk.END)
         #start response thread
         thread_g = getResponseThread(message+"\n")
         thread_g.start()
