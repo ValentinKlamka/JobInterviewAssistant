@@ -149,10 +149,18 @@ def getResponse(transcript):
     cv_summary = f.read()
     f.close()
     if len(cv_summary) > 0:
-        cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person:"+cv_summary}
+        cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person: "+cv_summary}
     else:
-        cv_summary_prompt= {"role": "assistant", "content": "No Summary of the CV of the interviewed person found."}
-    print (cv_summary_prompt)    
+        cv_summary_prompt= {"role": "assistant", "content": ""}
+
+    #open and read job_description.md file
+    f = open("job_description_summary.md", "r")
+    job_description = f.read()
+    f.close()
+    if len(job_description) > 0:
+        job_description_prompt= {"role": "assistant", "content": "Job description summary: "+job_description}
+    else:
+        job_description_prompt= {"role": "assistant", "content": ""}
     #get gpt-version from config.ini file
     gpt_version = config["GPT-Version"]["gpt-version"]
     response = client.chat.completions.create(
@@ -160,6 +168,7 @@ def getResponse(transcript):
         messages=[
             {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."},
             cv_summary_prompt,
+            job_description_prompt,
             {"role": "assistant", "content": ''.join(memory)},
             {"role": "user", "content": transcript}
         ],

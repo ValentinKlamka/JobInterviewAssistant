@@ -47,7 +47,9 @@ Before you start your Interview you can provide a summary of your CV to the Assi
 5. Save the file and close it.
 
 
-What happens internally is that this gets passed to ChatGPT at each request: ``cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person:"+cv_summary}``
+What happens internally is that this gets passed to ChatGPT at each request: ``cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person:"+cv_summary}``.
+
+Similarly you can also provide a summary of the job description. Just generate a summary with Bing AI and  copy the job description into the `job_description.md` file in the `JobInterviewAssistant` folder. It gets passed in the following fashion: ``job_description_prompt= {"role": "assistant", "content": "Job description summary: "+job_description}``.
 
 ### Interview
 
