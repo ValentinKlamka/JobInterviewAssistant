@@ -18,6 +18,8 @@ memory=[]
 frames=[]
 recording = False
 
+at_end=True
+
 #create items consiting of model name, cost and description
 class Model:
     def __init__(self, name,  hint,cost):
@@ -141,6 +143,7 @@ def transcribe():
 
 def getResponse(transcript):
     global memory 
+    global at_end
     #read config.ini file to get gpt-version
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -194,7 +197,8 @@ def getResponse(transcript):
             #insert the chunk_message into the text box in blue color
             text_box.insert(END,chunk_message,'blue')
             text_box.configure(state='disabled')
-            text_box.see(END)
+            if at_end:
+                text_box.see(END)
     text_box.configure(state='normal')
     text_box.insert(END,"\n")
     text_box.configure(state='disabled')
@@ -275,7 +279,27 @@ def send_message(event=None):
     return 
 
 
+def scroll_to_end(event):
+    global at_end
+    at_end = True
+    text_box.see(tk.END)
+    canvas.place_forget()
+    canvas.unbind('<Button-1>')
+    
 
+def update_arrow_visibility(event=None):
+    global at_end
+    bottom = float(text_box.index(tk.END))
+    visible_bottom = 1.0+float(text_box.index('@0,{} linestart'.format(str(text_box.winfo_height()))))
+    if bottom > visible_bottom:
+        at_end = False
+        canvas.place(in_=text_box, relx=0.5, rely=1.0, anchor=tk.S)
+        canvas.bind('<Button-1>', scroll_to_end)
+
+    else:
+        at_end = True
+        canvas.place_forget()
+        canvas.unbind('<Button-1>')
 
 
 p = pyaudio.PyAudio()
@@ -326,6 +350,18 @@ text_box.config(yscrollcommand=scroll.set)
 #make it non editable
 text_box.configure(state='disabled')
 
+# Loading the down arrow image
+down_arrow_img = tk.PhotoImage(file='arrow_down.png')  # Replace 'down_arrow.png' with your image file path
+
+# Create a canvas inside the Text widget. change the cursor to finger
+canvas = tk.Canvas(text_box, highlightthickness=0, background='white', cursor="left_ptr",width=16, height=16)
+canvas_image = canvas.create_image(8, 8, image=down_arrow_img, anchor=tk.CENTER)
+
+
+text_box.bind('<Configure>', update_arrow_visibility)
+text_box.bind('<MouseWheel>', update_arrow_visibility)
+text_box.bind('<Button-1>', update_arrow_visibility)
+canvas.bind('<Button-1>', update_arrow_visibility)
 entry_frame = tk.Frame(mainframe, bg='white')
 entry_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, padx=5, pady=5)
 text_box.pack(side=tk.TOP, fill=tk.BOTH, padx=5, pady=5, expand=True)
