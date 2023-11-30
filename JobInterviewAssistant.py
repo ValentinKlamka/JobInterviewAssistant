@@ -18,7 +18,7 @@ memory=[]
 frames=[]
 recording = False
 
-at_end=True
+
 
 #create items consiting of model name, cost and description
 class Model:
@@ -38,9 +38,9 @@ class recordThread (threading.Thread):
    def __init__(self):
       threading.Thread.__init__(self)
    def run(self):
-      print ("Starting " + self.name)
+      print ("Starting Record" + self.name)
       record()
-      print ("Exiting " + self.name)
+      print ("Exiting Record" + self.name)
 
 # thread to transcribe the recorded audio file
 
@@ -48,9 +48,9 @@ class transcribeThread (threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
     def run(self):  
-        print ("Starting " + self.name)
+        print ("Starting Transcribe" + self.name)
         transcribe()
-        print ("Exiting " + self.name)
+        print ("Exiting Transcribe" + self.name)
 
 #thread to get response from gpt-3 with argument transcript
 
@@ -59,23 +59,23 @@ class getResponseThread (threading.Thread):
         threading.Thread.__init__(self)
         self.transcript = transcript
     def run(self):  
-        print ("Starting " + self.name)
+        print ("Starting Response" + self.name)
         getResponse(self.transcript)
-        print ("Exiting " + self.name)
+        print ("Exiting Response" + self.name)
 
 #on enter start recording
 def on_enter(e):
-    
-    
-    button['background'] = 'green'
-    button['text'] = 'Recording'
-    button['fg'] = 'black'
+    global button_hovered, left_ctrl_pressed
+    if  button_hovered  ^ left_ctrl_pressed: # XOR
+        button['background'] = 'green'
+        button['text'] = 'Recording'
+        button['fg'] = 'black'
 
-    print("* recording")
-    global recording
-    recording=True
-    thread_r = recordThread()
-    thread_r.start()
+        print("* recording")
+        global recording
+        recording=True
+        thread_r = recordThread()
+        thread_r.start()
 
 def record():
 
@@ -89,25 +89,47 @@ def record():
     return
     
 def on_leave(e):
-    
-    button['background'] = 'red'
-    button['text'] = 'Record'
-    button['fg'] = 'white'
-    global recording
-    recording=False
-    print("* done recording")
-    
-    global FILEINDEX
-    wf = wave.open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", 'wb')
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(p.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
-    wf.writeframes(b''.join(frames))
-    wf.close()
-    print("wav saved")
-    frames.clear()
-    thread_t = transcribeThread()
-    thread_t.start()
+    global button_hovered, left_ctrl_pressed
+    if not left_ctrl_pressed and not button_hovered:
+        button['background'] = 'red'
+        button['text'] = 'Record'
+        button['fg'] = 'white'
+        global recording
+        recording=False
+        print("* done recording")
+        
+        global FILEINDEX
+        wf = wave.open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", 'wb')
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(p.get_sample_size(FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
+        wf.close()
+        print("wav saved")
+        frames.clear()
+        thread_t = transcribeThread()
+        thread_t.start()
+
+def check_hover_enter(event):
+    global button_hovered
+    button_hovered = True
+    on_enter(event)
+
+def check_hover_leave(event):
+    global button_hovered
+    button_hovered = False
+    on_leave(event)
+   
+
+def check_ctrl_enter(event):
+    global left_ctrl_pressed
+    left_ctrl_pressed = True
+    on_enter(event)
+
+def check_ctrl_leave(event):
+    global left_ctrl_pressed
+    left_ctrl_pressed = False
+    on_leave(event)
    
 
 def transcribe():
@@ -123,7 +145,10 @@ def transcribe():
         return
     #append transcript to log.txt file
     f = open("log.txt", "a")
-    f.write(transcript)
+    try:
+        f.write(transcript)
+    except:
+        print("error while writing to log.txt")
     f.write("\n")
     f.close()
 
@@ -204,12 +229,16 @@ def getResponse(transcript):
     text_box.configure(state='disabled')
     full_reply_content = ''.join(collected_messages)
     f = open("log.txt", "a")
-    f.write(full_reply_content)
+    try:
+        f.write(full_reply_content)
+    except:
+        print("error while writing to log.txt")
     f.write("\n")
     f.close()
     memory.append(transcript)
     memory.append(full_reply_content)
     return
+
 
 def on_closing():
     global recording
@@ -313,6 +342,12 @@ stream = p.open(format = FORMAT,
                 frames_per_buffer = CHUNK)
 
 window=tk.Tk()
+
+at_end=True
+
+button_hovered = False
+left_ctrl_pressed = False
+
 mainframe=tk.Frame(window,bg='white')
 mainframe.pack(fill=BOTH, expand=1)
 window.title('Job Interview Assistant')  
@@ -337,8 +372,11 @@ changebold()
 
 button = tk.Button(mainframe, text='Record', width=20, height=10, bg='red', fg='white')
 button.pack(side=LEFT, anchor=SW)
-button.bind("<Enter>", on_enter)
-button.bind("<Leave>", on_leave)
+
+button.bind("<Enter>", check_hover_enter)
+button.bind("<Leave>", check_hover_leave)
+window.bind("<Control_L>", check_ctrl_enter)
+window.bind("<KeyRelease-Control_L>", check_ctrl_leave)
 
 # to the right side of the button create a scrollable text box
 text_box = tk.Text(mainframe, height=10, width=200)
