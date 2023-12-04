@@ -6,6 +6,7 @@ import threading
 from os.path import join, dirname
 from openai import OpenAI
 import configparser
+import keyboard
 
 
 CHUNK = 1024
@@ -375,9 +376,10 @@ button.pack(side=LEFT, anchor=SW)
 
 button.bind("<Enter>", check_hover_enter)
 button.bind("<Leave>", check_hover_leave)
-window.bind("<Control_L>", check_ctrl_enter)
-window.bind("<KeyRelease-Control_L>", check_ctrl_leave)
 
+#when pressing ctrl, trigger check_ctrl_enter, even if out of focus
+keyboard.on_press_key("ctrl", check_ctrl_enter)
+keyboard.on_release_key("ctrl", check_ctrl_leave)
 # to the right side of the button create a scrollable text box
 text_box = tk.Text(mainframe, height=10, width=200)
 

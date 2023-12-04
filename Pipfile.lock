@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "52b3e56c1db0452ee36f581d65859497865b53d45577e8411a95fb6382e955e8"
+            "sha256": "2a08fc239dc9a567187c5ef375b1914b1749bb2cc833e3a99e95204cdf9d2493"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -104,13 +104,21 @@
             "markers": "python_version >= '3.5'",
             "version": "==3.6"
         },
-        "openai": {
+        "keyboard": {
             "hashes": [
-                "sha256:163e7ece4af76e961f58b75ea20a42b0d0c2a240c2f81b41a3d1c5962463cdf8",
-                "sha256:9437458978fb502e61336c3082e02b09c49feebe0e8516a2b8fb4563e6e4af4e"
+                "sha256:63ed83305955939ca5c9a73755e5cc43e8242263f5ad5fd3bb7e0b032f3d308b",
+                "sha256:8e9c2422f1217e0bd84489b9ecd361027cc78415828f4fe4f88dd4acd587947b"
             ],
             "index": "pypi",
-            "version": "==1.3.5"
+            "version": "==0.13.5"
+        },
+        "openai": {
+            "hashes": [
+                "sha256:18074a0f51f9b49d1ae268c7abc36f7f33212a0c0d08ce11b7053ab2d17798de",
+                "sha256:e5c51367a910297e4d1cd33d2298fb87d7edf681edbe012873925ac16f95bee0"
+            ],
+            "index": "pypi",
+            "version": "==1.3.7"
         },
         "pyaudio": {
             "hashes": [
