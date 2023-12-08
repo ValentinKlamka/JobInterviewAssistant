@@ -1,9 +1,11 @@
 from tkinter import *
 import tkinter as tk
 import pyaudio
+from pydub import AudioSegment
 import wave
 import threading
 from os.path import join, dirname
+import os
 from openai import OpenAI
 import configparser
 import keyboard
@@ -135,12 +137,29 @@ def check_ctrl_leave(event):
 
 def transcribe():
     global FILEINDEX
-    audio_file= open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", "rb")
-    transcript = client.audio.transcriptions.create(
-        model="whisper-1", 
-        file=audio_file,
-        response_format="text"
-    )
+    audio_file = AudioSegment.from_wav(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
+    transcript=""
+    for i, chunk in enumerate(audio_file[::400*1000]): #split after 400 seconds
+        out_file = f"chunk{FILEINDEX}_{i}.wav"
+        chunk.export(out_file, format="wav")
+        wavchunk=open(out_file,"rb")
+        #transcribe the audio file
+        part = client.audio.transcriptions.create(
+            model="whisper-1", 
+            file=wavchunk,
+            response_format="text"
+        )
+        #append the part to the full transcript
+        transcript=transcript+part
+        #close the audio file
+        wavchunk.close()
+
+
+        #delete the audio file
+        os.remove(out_file)
+    
+
+
     if len(transcript) <= 4:
         print("No transcript found")
         return
@@ -205,7 +224,7 @@ def getResponse(transcript):
     response = client.chat.completions.create(
         model=gpt_version,
         messages=[
-            {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person. Give short answers."},
+            {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."},
             cv_summary_prompt,
             job_description_prompt,
             {"role": "assistant", "content": ''.join(memory)},

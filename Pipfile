@@ -11,6 +11,7 @@ thread6 = "*"
 openai = "*"
 configparser = "*"
 keyboard = "*"
+pydub = "*"
 
 [dev-packages]
 
