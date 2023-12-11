@@ -9,6 +9,12 @@ import os
 from openai import OpenAI
 import configparser
 import keyboard
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+matplotlib.use('Agg')
 
 
 CHUNK = 1024
@@ -20,6 +26,9 @@ FILEINDEX = 0
 memory=[]
 frames=[]
 recording = False
+XLIM = 30000  # Desired xlim
+YLIM = 3000  # Desired ylim
+data = None
 
 
 
@@ -73,15 +82,15 @@ def on_enter(e):
         button['background'] = 'green'
         button['text'] = 'Recording'
         button['fg'] = 'black'
-
         print("* recording")
+        start_animation(e)
         global recording
         recording=True
         thread_r = recordThread()
         thread_r.start()
 
 def record():
-
+    global data
     global recording
     while recording:
 
@@ -100,7 +109,7 @@ def on_leave(e):
         global recording
         recording=False
         print("* done recording")
-        
+        stop_animation(e)
         global FILEINDEX
         wf = wave.open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", 'wb')
         wf.setnchannels(CHANNELS)
@@ -112,6 +121,23 @@ def on_leave(e):
         frames.clear()
         thread_t = transcribeThread()
         thread_t.start()
+
+def start_animation(event):
+    global ani
+    ani = animation.FuncAnimation(fig, update_plot, blit=True)
+    canvas_p.draw()
+
+def stop_animation(event):
+    global ani
+    global accumulated_data
+    if ani:
+        ani.event_source.stop()
+        
+        fig.canvas.draw()
+        ani = None
+        accumulated_data = np.zeros(XLIM, dtype=np.int16)  # Clear accumulated data
+        canvas_p.draw()
+
 
 def check_hover_enter(event):
     global button_hovered
@@ -267,6 +293,7 @@ def on_closing():
     stream.stop_stream()
     stream.close()
     p.terminate()
+    window.quit()
     window.destroy()
 
 def select(option):
@@ -359,7 +386,40 @@ stream = p.open(format = FORMAT,
                 rate = RATE,
                 input = True,
                 input_device_index =2,
-                frames_per_buffer = CHUNK)
+                frames_per_buffer = CHUNK
+                )
+
+# Initialize figure and plot for the left channel
+fig, ax = plt.subplots()
+x = np.arange(0, XLIM)
+line, = ax.plot(x, np.zeros(XLIM), '-', lw=2)
+# do not show axis
+ax.axis('off')
+
+ax.set_ylim(-YLIM, YLIM)
+ax.set_xlim(0, XLIM)
+
+# Initialize an array to accumulate chunks
+accumulated_data = np.zeros(XLIM, dtype=np.int16)
+
+# Animation object reference
+ani = None
+
+# Function to update the plot
+def update_plot(frame):
+    global accumulated_data
+    global data
+    data = stream.read(CHUNK)
+    data_np = np.frombuffer(data, dtype=np.int16)
+    
+    # Append incoming chunk to accumulated data
+    accumulated_data = np.roll(accumulated_data, -CHUNK)
+    accumulated_data[-CHUNK:] = data_np[::CHANNELS]  # Extract left channel data
+    
+    line.set_ydata(accumulated_data)
+    
+    return line,
+
 
 window=tk.Tk()
 
@@ -390,8 +450,22 @@ menu_bar.add_cascade(label="File", menu=file_menu)
 window.config(menu=menu_bar)
 changebold()
 
-button = tk.Button(mainframe, text='Record', width=20, height=10, bg='red', fg='white')
-button.pack(side=LEFT, anchor=SW)
+# Canvas to embed matplotlib plot
+#create Childframe on the left side of the window
+
+childframe = tk.Frame(mainframe,bg='white', width=200)
+childframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+childframe.pack_propagate(False)
+
+canvas_p = FigureCanvasTkAgg(fig, master=childframe)
+
+
+
+button = tk.Button(childframe, text='Record', width=20, height=10, bg='red', fg='white')
+button.pack(side=BOTTOM)
+
+canvas_p.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
 
 button.bind("<Enter>", check_hover_enter)
 button.bind("<Leave>", check_hover_leave)

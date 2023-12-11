@@ -12,6 +12,9 @@ openai = "*"
 configparser = "*"
 keyboard = "*"
 pydub = "*"
+numpy = "*"
+matplotlib = "*"
+ffmpeg-downloader = "*"
 
 [dev-packages]
 
