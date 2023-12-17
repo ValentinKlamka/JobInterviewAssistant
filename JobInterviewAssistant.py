@@ -185,7 +185,7 @@ def transcribe():
         os.remove(out_file)
     
 
-
+    os.remove(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
     if len(transcript) <= 4:
         print("No transcript found")
         return
@@ -219,40 +219,27 @@ def getResponse(transcript):
     config = configparser.ConfigParser()
     config.read('config.ini')
 
-    #open and read cv_summary.md file
+    #open and read notes.md file
     try:
-        f = open("cv_summary.md", "r")
-        cv_summary = f.read()
+        f = open("notes.md", "r")
+        notes = f.read()
         f.close()
-        if len(cv_summary) > 0:
-            cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person: "+cv_summary}
+        if len(notes) > 0:
+            notes_promt= {"role": "assistant", "content": "Notes: "+notes}
         else:
-            cv_summary_prompt= {"role": "assistant", "content": ""}
+            notes_promt= {"role": "assistant", "content": "No Notes Provided"}
     except:
-        cv_summary_prompt= {"role": "assistant", "content": ""}
+        notes_promt= {"role": "assistant", "content": "No Notes Provided"}
 
 
-    #open and read job_description.md file
-    #if jobdscription_summary.md exists
-    try:
-        f = open("jobdescription_summary.md", "r")
-        job_description = f.read()
-        f.close()
-        if len(job_description) > 0:
-            job_description_prompt= {"role": "assistant", "content": "Job description summary: "+job_description}
-        else:
-            job_description_prompt= {"role": "assistant", "content": ""}
-    #if jobdscription_summary.md does not exist
-    except:
-        job_description_prompt= {"role": "assistant", "content": ""}
+   
     #get gpt-version from config.ini file
     gpt_version = config["GPT-Version"]["gpt-version"]
     response = client.chat.completions.create(
         model=gpt_version,
         messages=[
-            {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."},
-            cv_summary_prompt,
-            job_description_prompt,
+            {"role": "system", "content": "Please help to guide me through my job interview. I am the interviewed person. Answer the questions from my perspective. Use my notes, if I provided any. Answer all job interview questions with competence and confidence."},
+            notes_promt,
             {"role": "assistant", "content": ''.join(memory)},
             {"role": "user", "content": transcript}
         ],
