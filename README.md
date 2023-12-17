@@ -38,23 +38,13 @@ Note however, that for our chatbot to have a memory we need to feed it the previ
 
 ## Usage
 ### Preperation
-Before you start your Interview you can provide a summary of your CV to the Assistant with the help of external tools.
+In an earlier version of this project I gave the user the option to provide Chat_GPT with your cv and a job interview description. But I found, that when tasked to tell something about yourself the answers were pretty generic and therefore bad.
 
-1. You need to use an AI Tool which can read documents. If you have a Microsoft Account you can use the Bing AI. Just open Your CV as a PDF file in your edge browser. If you don't have and/or don't want to create a Microsoft Account you can also use for example https://www.chatpdf.com/
-2. Type something along the lines of "Please extract all the relevant information from this CV." into the chat window and let the AI do its magic. 
-3. Copy the summary and paste it into the `cv_summary.md` file in the `JobInterviewAssistant` folder.
-4. Make all the necessary adjustments to the summary. Read carefully, maybe the AI made some mistakes, which are not obvious at first glance.
-5. Save the file and close it.
-
-
-What happens internally is that this gets passed to ChatGPT at each request: ``cv_summary_prompt= {"role": "assistant", "content": "Summary of the CV of the interviewed person:"+cv_summary}``.
-
-Similarly you can also provide a summary of the job description. Just generate a summary with Bing AI and  copy the job description into the `job_description.md` file in the `JobInterviewAssistant` folder. It gets passed in the following fashion: ``job_description_prompt= {"role": "assistant", "content": "Job description summary: "+job_description}``.
-
+Instead I provide you with support for personal notes. That works much more nicely and is better aligned to what you want the interviewer to know about you. Place your notes in ``notes.md``, which you will find in the JobInterviewAssistant folder. Include what you want to say about yourself, projects you worked on, use previous work experience and your projects as example of what you value and what you are good at, which skills you have that are relevant for that job. Provide a description of what the company you apply to does and why you are such a good fit, prepare questions you want to ask, etc.
 ### Interview
 
-Before the Interview starts, open a command promt in the JobInterviewAssistant folder and execute ```python JobInterviewAssistant.py```. A window with a big red button on the left side will open at the top of your screen. If you **hover** over that button or alternatively if you hold left control-key it starts recording. Clicking it does nothing extra. If you stop hovering over the button or release the left control key it stops recording, the transcription process starts and an answer  is generated. The transcript and the generated answer will be displayed right next to the red button. Notice that your microphone is never recorded, just the sound output channel of your computer.
+Before the Interview starts, open a command promt in the JobInterviewAssistant folder and execute ```python JobInterviewAssistant.py```. A window with a big red button on the left side will open at the top of your screen. If you **hover** over that button or alternatively if you hold left control-key it starts recording. Clicking it does nothing extra. If you stop hovering over the button or release the left control key it stops recording, the transcription process starts and an answer  is generated. The transcript and the generated answer will be displayed right next to the red button. Notice that your microphone is never recorded, just the sound output channel of your computer and with that the interviewers voice.
 
-The system command prompt is `` {"role": "system", "content": "Please help to guide me through my job interview. Answer the questions from the perspective of the interviewed person."}``. Feel free to open JobinterviewAssistant.py with a text editor and change the prompt to your liking, it's currently near line 207 in JobinterviewAssistant.py.
+The system command prompt is ``  "Please help to guide me through my job interview. I am the interviewed person. Answer the questions from my perspective. Use my notes, if I provided any. Answer all job interview questions with competence and confidence.`` Feel free to open JobinterviewAssistant.py with a text editor and change the prompt to your liking, it's currently near line 241 in JobinterviewAssistant.py.
 
-To test if it works you can play a random youtube video, where someone speaks. Play the video, record it by hovering over the button and stop recording by moving your mouse away from the button. The transcript should be displayed within a few seconds and an answer should be generated. If you did set up the cv summary you might also want to test if that works. Type "Tell me something about yourself" in the chat and see if a tailored answer is generated. If that works, you are ready to go.
+To test if the recording works you can play a random youtube video, where someone speaks. Play the video, record it by hovering over the button and stop recording by moving your mouse away from the button. The transcript should be displayed within a few seconds and an answer should be generated. If you did set up the notes you might also want to test if that works. Type "Tell me something about yourself" in the chat and see if a tailored answer is generated. If that works, you are ready to go.
