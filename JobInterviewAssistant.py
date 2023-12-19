@@ -194,7 +194,7 @@ def transcribe():
     except:
         print("error while deleting file")
 
-        
+
     if len(transcript) <= 4:
         print("No transcript found")
         return
@@ -264,8 +264,7 @@ def getResponse(transcript):
             #insert the chunk_message into the text box in blue color
             text_box.insert(END,chunk_message,'blue')
             text_box.configure(state='disabled')
-            if at_end:
-                text_box.see(END)
+            update_arrow_visibility()
     text_box.configure(state='normal')
     text_box.insert(END,"\n")
     text_box.configure(state='disabled')
