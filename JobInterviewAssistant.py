@@ -183,10 +183,18 @@ def transcribe():
 
 
         #delete the audio file
-        os.remove(out_file)
+        try:
+            os.remove(out_file)
+        except:
+            print("error while deleting file")
     
 
-    os.remove(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
+    try:
+        os.remove(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
+    except:
+        print("error while deleting file")
+
+        
     if len(transcript) <= 4:
         print("No transcript found")
         return
