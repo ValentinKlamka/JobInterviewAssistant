@@ -165,17 +165,34 @@ def check_ctrl_leave(event):
 def transcribe():
     global FILEINDEX
     audio_file = AudioSegment.from_wav(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
+    #if audio file shorter than 0.2 seconds, delete it and return
+    if len(audio_file) < 200:
+        try:
+            os.remove(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
+        except:
+            print("error while deleting file")
+        return
     transcript=""
     for i, chunk in enumerate(audio_file[::400*1000]): #split after 400 seconds
         out_file = f"chunk{FILEINDEX}_{i}.wav"
         chunk.export(out_file, format="wav")
         wavchunk=open(out_file,"rb")
+        if len(wavchunk.read()) < 200:
+            try:
+                os.remove(out_file)
+            except:
+                print("error while deleting file")
+            continue
         #transcribe the audio file
-        part = client.audio.transcriptions.create(
-            model="whisper-1", 
-            file=wavchunk,
-            response_format="text"
-        )
+        try:
+            part = client.audio.transcriptions.create(
+                model="whisper-1", 
+                file=wavchunk,
+                response_format="text"
+            )
+        except:
+            "Connection error"
+            break
         #append the part to the full transcript
         transcript=transcript+part
         #close the audio file
@@ -223,7 +240,6 @@ def transcribe():
 
 def getResponse(transcript):
     global memory 
-    global at_end
     #read config.ini file to get gpt-version
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -244,16 +260,20 @@ def getResponse(transcript):
    
     #get gpt-version from config.ini file
     gpt_version = config["GPT-Version"]["gpt-version"]
-    response = client.chat.completions.create(
-        model=gpt_version,
-        messages=[
-            {"role": "system", "content": "Please help to guide me through my job interview. I am the interviewed person. Answer the questions from my perspective. Use my notes, if I provided any. Answer all job interview questions with competence and confidence."},
-            notes_promt,
-            {"role": "assistant", "content": ''.join(memory)},
-            {"role": "user", "content": transcript}
-        ],
-        stream=True
-        )
+    try:
+        response = client.chat.completions.create(
+            model=gpt_version,
+            messages=[
+                {"role": "system", "content": "Please help to guide me through my job interview. I am the interviewed person. Answer the questions from my perspective. Use my notes, if I provided any. Answer all job interview questions with competence and confidence."},
+                notes_promt,
+                {"role": "assistant", "content": ''.join(memory)},
+                {"role": "user", "content": transcript}
+            ],
+            stream=True
+            )
+    except:
+        print("Connection error")
+        return
     collected_messages = []
     text_box.tag_config('blue', foreground="blue")
     for chunk in response:
