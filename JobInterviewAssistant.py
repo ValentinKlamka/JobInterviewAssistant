@@ -34,15 +34,16 @@ data = None
 
 #create items consiting of model name, cost and description
 class Model:
-    def __init__(self, name,  hint,cost):
+    def __init__(self, name,  hint,cost,context_size):
         self.name = name
         self.hint = hint
         self.cost = cost
+        self.context_size=context_size
 
 
 Modellist = []
-Modellist.append(Model("gpt-3.5-turbo"," (Recommended)", "$0.002 / 1K tokens"))
-Modellist.append(Model("gpt-4-1106-preview","", "$0.03 / 1K tokens"))
+Modellist.append(Model("gpt-3.5-turbo-1106"," (Recommended)", "$0.002 / 1K tokens","Context-window:16385"))
+Modellist.append(Model("gpt-4-1106-preview","", "$0.03 / 1K tokens","Context-window:128000"))
 
 client = OpenAI()
 
@@ -430,7 +431,7 @@ window.grid_columnconfigure(0, weight=1)
 menu_bar = Menu(window)
 file_menu = Menu(menu_bar, tearoff=0)
 for model in Modellist:
-    file_menu.add_command(label=model.name+model.hint + " "+model.cost, command=lambda m=model.name: select(m))
+    file_menu.add_command(label=model.name+model.hint + "| "+model.cost+"| " +model.context_size, command=lambda m=model.name: select(m))
 
 file_menu.add_command(label="Quit", command=on_closing) 
 menu_bar.add_cascade(label="File", menu=file_menu)
