@@ -487,7 +487,7 @@ button.bind("<Leave>", check_hover_leave)
 keyboard.on_press_key("ctrl", check_ctrl_enter)
 keyboard.on_release_key("ctrl", check_ctrl_leave)
 # to the right side of the button create a scrollable text box
-text_box = tk.Text(mainframe, height=10, width=200)
+text_box = tk.Text(mainframe, height=10, width=200, font=('Arial', 12))
 
 # make it scrollable
 scroll = tk.Scrollbar(mainframe, command=text_box.yview)
@@ -512,7 +512,7 @@ entry_frame = tk.Frame(mainframe, bg='white')
 entry_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, padx=5, pady=5)
 text_box.pack(side=tk.TOP, fill=tk.BOTH, padx=5, pady=5, expand=True)
 
-entry_box = tk.Text(entry_frame,height=2,width=200) 
+entry_box = tk.Text(entry_frame,height=2,width=200, font=('Arial', 12)) 
 entry_box.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 #make entry box scrollable
 scroll = tk.Scrollbar(entry_frame, command=entry_box.yview)
