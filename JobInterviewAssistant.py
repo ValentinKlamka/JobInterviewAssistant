@@ -25,10 +25,12 @@ WAVE_OUTPUT_FILENAME = "output"
 FILEINDEX = 0
 memory=[]
 frames=[]
+full_transcript=""
 recording = False
 XLIM = 30000  # Desired xlim
 YLIM = 3000  # Desired ylim
 data = None
+
 
 
 
@@ -42,8 +44,10 @@ class Model:
 
 
 Modellist = []
-Modellist.append(Model("gpt-3.5-turbo-1106"," (Recommended)", "$0.002 / 1K tokens","Context-window:16385"))
+Modellist.append(Model("gpt-3.5-turbo-1106","", "$0.002 / 1K tokens","Context-window:16385"))
+Modellist.append(Model("gpt-3.5-turbo-0125"," (Recommended, Most Recent)", "$0.0015 / 1K tokens","Context-window:16385"))
 Modellist.append(Model("gpt-4-1106-preview","", "$0.03 / 1K tokens","Context-window:128000"))
+Modellist.append(Model("gpt-4-0125-preview","(Most Recent)", "$0.03 / 1K tokens","Context-window:128000"))
 
 client = OpenAI()
 
@@ -51,9 +55,7 @@ class recordThread (threading.Thread):
    def __init__(self):
       threading.Thread.__init__(self)
    def run(self):
-      print ("Starting Record" + self.name)
       record()
-      print ("Exiting Record" + self.name)
 
 # thread to transcribe the recorded audio file
 
@@ -61,9 +63,7 @@ class transcribeThread (threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
     def run(self):  
-        print ("Starting Transcribe" + self.name)
         transcribe()
-        print ("Exiting Transcribe" + self.name)
 
 #thread to get response from gpt-3 with argument transcript
 
@@ -72,9 +72,7 @@ class getResponseThread (threading.Thread):
         threading.Thread.__init__(self)
         self.transcript = transcript
     def run(self):  
-        print ("Starting Response" + self.name)
         getResponse(self.transcript)
-        print ("Exiting Response" + self.name)
 
 #on enter start recording
 def on_enter(e):
@@ -83,7 +81,6 @@ def on_enter(e):
         button['background'] = 'green'
         button['text'] = 'Recording'
         button['fg'] = 'black'
-        print("* recording")
         start_animation(e)
         global recording
         recording=True
@@ -97,6 +94,17 @@ def record():
 
         data = stream.read(CHUNK)
         frames.append(data)
+        #if frames are longer than 30 seconds, create a chunk and clear frames
+        if len(frames) > 30*RATE/CHUNK:
+            wf = wave.open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", 'wb')
+            wf.setnchannels(CHANNELS)
+            wf.setsampwidth(p.get_sample_size(FORMAT))
+            wf.setframerate(RATE)
+            wf.writeframes(b''.join(frames))
+            wf.close()
+            frames.clear()
+            thread_t = transcribeThread()
+            thread_t.start()
 
 
     return
@@ -109,7 +117,6 @@ def on_leave(e):
         button['fg'] = 'white'
         global recording
         recording=False
-        print("* done recording")
         stop_animation(e)
         global FILEINDEX
         wf = wave.open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", 'wb')
@@ -118,7 +125,7 @@ def on_leave(e):
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
         wf.close()
-        print("wav saved")
+
         frames.clear()
         thread_t = transcribeThread()
         thread_t.start()
@@ -164,78 +171,67 @@ def check_ctrl_leave(event):
 
 def transcribe():
     global FILEINDEX
-    audio_file = AudioSegment.from_wav(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
+    global full_transcript
+    audio_file = open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", "rb")
     #if audio file shorter than 0.2 seconds, delete it and return
-    if len(audio_file) < 200:
+    if len(AudioSegment.from_wav(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")) < 200:
         try:
+            audio_file.close()
             os.remove(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
         except:
-            print("error while deleting file")
+            print("error while deleting file ")
         return
-    transcript=""
-    for i, chunk in enumerate(audio_file[::400*1000]): #split after 400 seconds
-        out_file = f"chunk{FILEINDEX}_{i}.wav"
-        chunk.export(out_file, format="wav")
-        wavchunk=open(out_file,"rb")
-        if len(wavchunk.read()) < 200:
-            try:
-                os.remove(out_file)
-            except:
-                print("error while deleting file")
-            continue
-        #transcribe the audio file
-        try:
-            part = client.audio.transcriptions.create(
-                model="whisper-1", 
-                file=wavchunk,
-                response_format="text"
-            )
-        except:
-            "Connection error"
-            break
-        #append the part to the full transcript
-        transcript=transcript+part
-        #close the audio file
-        wavchunk.close()
-
-
-        #delete the audio file
-        try:
-            os.remove(out_file)
-        except:
-            print("error while deleting file")
-    
-
     try:
+        transcript = client.audio.transcriptions.create(
+        model="whisper-1", 
+        file=audio_file,
+        response_format="text"
+        )
+    except:
+        print("Connection error")
+        return
+
+    
+    #delete audio file
+    try:
+        audio_file.close()
         os.remove(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
     except:
-        print("error while deleting file")
-
-
+        print("error while deleting file "+ WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav")
+    FILEINDEX+=1 
+    
     if len(transcript) <= 4:
         print("No transcript found")
         return
+    transcript = transcript.replace("\n"," ")
+    full_transcript = full_transcript + transcript
+    
     #append transcript to log.txt file
-    f = open("log.txt", "a")
     try:
+        f = open("log.txt", "a")
         f.write(transcript)
+        f.close()
+
     except:
         print("error while writing to log.txt")
-    f.write("\n")
-    f.close()
-
+    
     #append transcript to text box
     text_box.configure(state='normal')
     text_box.insert(END,transcript)
-    text_box.insert(END,"\n")
     text_box.configure(state='disabled')
     #scroll to bottom
     text_box.see(END)
+    if not recording:          
+        text_box.insert(END,"\n")
+        f = open("log.txt", "a")
+        f.write("\n")
+        f.close()
+        #start response thread
+        thread_g = getResponseThread(full_transcript)
+        thread_g.start()
     
-    FILEINDEX+=1
-    #start response thread
-    thread_g = getResponseThread(transcript)
-    thread_g.start()
+    
+      
     return
 
 def getResponse(transcript):
@@ -273,6 +269,7 @@ def getResponse(transcript):
             )
     except:
         print("Connection error")
+        full_transcript=""
         return
     collected_messages = []
     text_box.tag_config('blue', foreground="blue")
@@ -298,6 +295,7 @@ def getResponse(transcript):
     f.close()
     memory.append(transcript)
     memory.append(full_reply_content)
+    full_transcript=""
     return
 
 
@@ -538,8 +536,3 @@ entry_frame.columnconfigure(1, minsize=50)  # Set a minimum size for the Send bu
 window.protocol("WM_DELETE_WINDOW", on_closing)
 
 window.mainloop()
-
-
-
-
-
