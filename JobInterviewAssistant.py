@@ -30,6 +30,7 @@ recording = False
 XLIM = 30000  # Desired xlim
 YLIM = 3000  # Desired ylim
 data = None
+responselocked=False
 
 
 
@@ -72,12 +73,14 @@ class getResponseThread (threading.Thread):
         threading.Thread.__init__(self)
         self.transcript = transcript
     def run(self):  
+        responselocked=True
         getResponse(self.transcript)
+        
 
 #on enter start recording
 def on_enter(e):
     global button_hovered, left_ctrl_pressed
-    if  button_hovered  ^ left_ctrl_pressed: # XOR
+    if  button_hovered  ^ left_ctrl_pressed and not responselocked: # XOR
         button['background'] = 'green'
         button['text'] = 'Recording'
         button['fg'] = 'black'
@@ -231,7 +234,7 @@ def transcribe():
         thread_g.start()
     
     
-      
+    responselocked=False  
     return
 
 def getResponse(transcript):
