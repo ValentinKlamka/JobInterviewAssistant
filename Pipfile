@@ -15,6 +15,7 @@ pydub = "*"
 numpy = "*"
 matplotlib = "*"
 ffmpeg-downloader = "*"
+ffmpeg = "*"
 
 [dev-packages]
 

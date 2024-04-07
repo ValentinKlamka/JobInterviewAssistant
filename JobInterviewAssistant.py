@@ -30,7 +30,6 @@ recording = False
 XLIM = 30000  # Desired xlim
 YLIM = 3000  # Desired ylim
 data = None
-responselocked=False
 
 
 
@@ -73,20 +72,23 @@ class getResponseThread (threading.Thread):
         threading.Thread.__init__(self)
         self.transcript = transcript
     def run(self):  
-        responselocked=True
         getResponse(self.transcript)
         
 
 #on enter start recording
 def on_enter(e):
-    global button_hovered, left_ctrl_pressed
-    if  button_hovered  ^ left_ctrl_pressed and not responselocked: # XOR
+    global button_hovered, left_ctrl_pressed, recording
+    if  button_hovered  ^ left_ctrl_pressed: # XOR
         button['background'] = 'green'
         button['text'] = 'Recording'
         button['fg'] = 'black'
-        start_animation(e)
-        global recording
         recording=True
+        try:
+            start_animation(e)
+        except:
+            print("failed animation")
+        
+        
         thread_r = recordThread()
         thread_r.start()
 
@@ -118,9 +120,9 @@ def on_leave(e):
         button['background'] = 'red'
         button['text'] = 'Record'
         button['fg'] = 'white'
-        global recording
-        recording=False
+        global recording     
         stop_animation(e)
+        recording=False
         global FILEINDEX
         wf = wave.open(WAVE_OUTPUT_FILENAME+str(FILEINDEX)+".wav", 'wb')
         wf.setnchannels(CHANNELS)
@@ -135,7 +137,7 @@ def on_leave(e):
 
 def start_animation(event):
     global ani
-    ani = animation.FuncAnimation(fig, update_plot, blit=True)
+    ani = animation.FuncAnimation(fig, update_plot)
     canvas_p.draw()
 
 def stop_animation(event):
@@ -191,7 +193,7 @@ def transcribe():
         response_format="text"
         )
     except:
-        print("Connection error")
+        print("Connection error to Whisper")
         return
 
     
@@ -224,8 +226,11 @@ def transcribe():
     text_box.configure(state='disabled')
     #scroll to bottom
     text_box.see(END)
-    if not recording:          
-        text_box.insert(END,"\n")
+    if not recording:
+        print("I am here") 
+        text_box.configure(state='normal')         
+        text_box.insert(END,"\n",)
+        text_box.configure(state='disabled')
         f = open("log.txt", "a")
         f.write("\n")
         f.close()
@@ -234,7 +239,6 @@ def transcribe():
         thread_g.start()
     
     
-    responselocked=False  
     return
 
 def getResponse(transcript):
@@ -271,7 +275,7 @@ def getResponse(transcript):
             stream=True
             )
     except:
-        print("Connection error")
+        print("Connection error to Chat GPT")
         full_transcript=""
         return
     collected_messages = []
@@ -427,11 +431,10 @@ def update_plot(frame):
     global data
     data = stream.read(CHUNK)
     data_np = np.frombuffer(data, dtype=np.int16)
-    
+
     # Append incoming chunk to accumulated data
     accumulated_data = np.roll(accumulated_data, -CHUNK)
     accumulated_data[-CHUNK:] = data_np[::CHANNELS]  # Extract left channel data
-    
     line.set_ydata(accumulated_data)
     
     return line,
